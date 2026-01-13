@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Neon Numbers | Guessing Game</title>
+    <link rel="stylesheet" href="assets/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="background-blobs">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+    </div>
+
+    <main class="game-container">
+      <header>
+        <h1 class="title">NEON <span class="accent">NUMBERS</span></h1>
+      </header>
+
+      <section class="game-card glass">
+        <div class="input-group">
+          <label for="guess-input">ENTER A NUMBER</label>
+          <input
+            type="number"
+            id="guess-input"
+            placeholder="00-99"
+            min="0"
+            max="99"
+          />
+        </div>
+
+        <button id="guess-btn" class="btn-primary">GUESS</button>
+
+        <div class="feedback-area glass-inner">
+          <p id="feedback-msg">READY TO PLAY?</p>
+          <div class="visual-feedback">
+            <div class="wave"></div>
+            <div class="wave"></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="stats-container">
+        <div class="stat-card glass">
+          <span class="stat-label">SCORE:</span>
+          <span id="current-score" class="stat-value">0</span>
+        </div>
+        <div class="stat-card glass">
+          <span class="stat-label">HIGH SCORE:</span>
+          <span id="high-score" class="stat-value">0</span>
+        </div>
+      </aside>
+
+      <footer class="controls">
+        <button id="new-game-btn" class="btn-secondary glass">NEW GAME</button>
+      </footer>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>

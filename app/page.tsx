@@ -1,64 +1,182 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect } from "react";
 
 export default function Home() {
+  const [guess, setGuess] = useState("");
+  const [feedback, setFeedback] = useState("READY TO PLAY?");
+  const [feedbackColor, setFeedbackColor] = useState("var(--primary-neon)");
+  const [currentScore, setCurrentScore] = useState(0);
+  const [highScore, setHighScore] = useState(0);
+  const [remainingGuesses, setRemainingGuesses] = useState(10); // Default or initial value
+  const [isGameOver, setIsGameOver] = useState(false);
+
+  const [sessionId, setSessionId] = useState("");
+  const [guesses, setGuesses] = useState(0);
+  const [maxGuesses, setMaxGuesses] = useState(10);
+  const [won, setWon] = useState(false);
+
+  useEffect(() => {
+    startNewGame();
+  }, []);
+
+  // Implement your Go API calls here
+  const startNewGame = async () => {
+    try {
+      const response = await fetch("http://127.0.0.1:8080/api/new-game", {
+        method: "POST",
+      });
+      const data = await response.json();
+
+      setSessionId(data.game.session_id);
+      setGuesses(data.game.guesses);
+      setMaxGuesses(data.game.maxGuesses);
+      setRemainingGuesses(data.game.maxGuesses - data.game.guesses);
+      setIsGameOver(false);
+      setFeedback(data.message);
+      setFeedbackColor("var(--primary-neon)");
+      setGuess("");
+    } catch (error) {
+      console.error("Error starting new game:", error);
+    }
+  };
+
+  const handleGuess = async () => {
+    if (!guess || !sessionId || isGameOver) return;
+    try {
+      const response = await fetch("http://127.0.0.1:8080/api/guess", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          session_id: sessionId,
+          guess: parseInt(guess),
+        }),
+      });
+      const data = await response.json();
+
+      setFeedback(data.message);
+      setRemainingGuesses(data.remaining_guesses);
+
+      if (data.correct) {
+        setFeedbackColor("#4ade80"); // Bright green
+        setIsGameOver(true);
+        setCurrentScore((prev) => prev + 1);
+        if (currentScore + 1 > highScore) setHighScore(currentScore + 1);
+      } else if (data.remaining_guesses <= 0) {
+        setFeedbackColor("#f87171"); // Bright red
+        setIsGameOver(true);
+        setCurrentScore(0);
+      } else {
+        setFeedbackColor(
+          data.too_high || data.too_low
+            ? "var(--secondary-neon)"
+            : "var(--primary-neon)"
+        );
+      }
+      setGuess("");
+    } catch (error) {
+      console.error("Error making guess:", error);
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="relative flex min-h-screen items-center justify-center bg-[#05070a] text-white overflow-hidden selection:bg-cyan-500/30">
+      {/* Background Blobs */}
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary-neon rounded-full blur-[120px] opacity-20 animate-blob" />
+        <div
+          className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-secondary-neon rounded-full blur-[120px] opacity-20 animate-blob"
+          style={{ animationDelay: "2s" }}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+      </div>
+
+      <main className="relative z-10 w-full max-w-4xl px-6 grid grid-cols-1 md:grid-cols-[1fr_200px] gap-8">
+        <header className="md:col-span-2 text-center mb-4">
+          <h1 className="text-5xl md:text-6xl font-extrabold tracking-widest uppercase">
+            NEON{" "}
+            <span className="text-primary-neon drop-shadow-[0_0_15px_rgba(0,242,255,0.5)]">
+              NUMBERS
+            </span>
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+        </header>
+
+        {/* Game Main Card */}
+        <section className="glass rounded-3xl p-8 md:p-12 flex flex-col gap-8 shadow-2xl">
+          <div className="space-y-4">
+            <label className="block text-xs font-semibold tracking-[0.2em] text-white/50 uppercase">
+              Enter a Number
+            </label>
+            <input
+              type="number"
+              value={guess}
+              onChange={(e) => setGuess(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleGuess()}
+              placeholder="1-10"
+              className="w-full bg-black/40 border border-white/10 rounded-2xl py-6 text-4xl text-center focus:outline-none focus:border-primary-neon focus:ring-1 focus:ring-primary-neon/50 transition-all placeholder:text-white/10"
+              disabled={isGameOver}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </div>
+
+          <button
+            onClick={handleGuess}
+            disabled={isGameOver}
+            className="w-full py-6 rounded-full bg-gradient-to-r from-secondary-neon to-primary-neon text-xl font-bold tracking-wider hover:opacity-90 active:scale-[0.98] transition-all shadow-[0_10px_30px_rgba(0,0,0,0.3)] disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            Documentation
-          </a>
-        </div>
+            GUESS
+          </button>
+
+          <div className="glass-inner relative overflow-hidden flex flex-col items-center justify-center py-10 min-h-[140px]">
+            <p
+              className="text-2xl font-bold tracking-tight transition-all duration-300"
+              style={{ color: feedbackColor }}
+            >
+              {feedback}
+            </p>
+            <div className="absolute bottom-0 left-0 w-full h-1 overflow-hidden opacity-30">
+              <div className="w-[200%] h-full bg-gradient-to-r from-transparent via-primary-neon to-transparent animate-wave" />
+            </div>
+          </div>
+        </section>
+
+        {/* Stats Sidebar */}
+        <aside className="flex flex-col gap-6">
+          <div className="glass rounded-2xl p-6 flex flex-col items-center justify-center text-center">
+            <span className="text-[10px] font-bold tracking-[0.2em] text-white/40 uppercase mb-2">
+              Score
+            </span>
+            <span className="text-4xl font-black">{currentScore}</span>
+          </div>
+          <div className="glass rounded-2xl p-6 flex flex-col items-center justify-center text-center">
+            <span className="text-[10px] font-bold tracking-[0.2em] text-white/40 uppercase mb-2">
+              High Score
+            </span>
+            <span className="text-4xl font-black text-primary-neon">
+              {highScore}
+            </span>
+          </div>
+          <div className="glass rounded-2xl p-6 flex flex-col items-center justify-center text-center border-secondary-neon/30">
+            <span className="text-[10px] font-bold tracking-[0.2em] text-white/40 uppercase mb-2">
+              Remaining
+            </span>
+            <span className="text-4xl font-black text-secondary-neon">
+              {remainingGuesses}
+            </span>
+          </div>
+          <button
+            onClick={startNewGame}
+            className="glass w-full py-4 rounded-xl text-sm font-bold tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-all uppercase"
+          >
+            New Game
+          </button>
+        </aside>
+
+        <footer className="md:col-span-2 text-center mt-4">
+          <p className="text-[10px] text-white/20 tracking-widest uppercase">
+            Built with Next.js & Go Logic
+          </p>
+        </footer>
       </main>
     </div>
   );
