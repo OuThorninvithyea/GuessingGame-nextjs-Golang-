@@ -1,3 +1,7 @@
+# GuessingGame-nextjs-Golang-
+
+Project for learning go lang and typescript
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
@@ -8,6 +12,8 @@ First, run the development server:
 npm run dev
 # or
 yarn dev
+# or
+pnpm dev
 # or
 pnpm dev
 # or
